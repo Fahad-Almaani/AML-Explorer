@@ -3,8 +3,8 @@ import pandas as pd
 import numpy as np
 from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QPushButton, QLabel, QListWidget, QVBoxLayout, 
-    QHBoxLayout, QGroupBox, QComboBox, QTextEdit, QFileDialog, QWidget, QMessageBox,QProgressDialog
+    QApplication, QMainWindow, QPushButton, QLabel, QListWidget, QVBoxLayout, QDialog,
+    QDialogButtonBox,QHBoxLayout, QGroupBox, QComboBox, QTextEdit, QFileDialog, QWidget, QMessageBox,QProgressDialog,QSpinBox
 )
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
@@ -17,6 +17,12 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.preprocessing import LabelEncoder
 import seaborn as sns
 import matplotlib.pyplot as plt
+
+
+
+MAIN_FONT_STYLE = "font-size:18px;"
+SECONDARY_FONT_STYLE = "font-size:16px;" 
+
 
 class TrainThread(QThread):
     finished = pyqtSignal(str)  # Signal to indicate completion with results
@@ -45,8 +51,6 @@ class TrainThread(QThread):
             self.finished.emit(f"Error: {str(e)}")
 
 
-MAIN_FONT_STYLE = "font-size:18px;"
-SECONDARY_FONT_STYLE = "font-size:16px;" 
 class MLApp(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -64,14 +68,17 @@ class MLApp(QMainWindow):
         self.main_layout = QVBoxLayout()
         self.create_left_panel()
         self.create_right_panel()
+        
 
         # Central widget
         central_widget = QWidget()
         central_layout = QHBoxLayout()
         central_layout.addWidget(self.left_panel)
         central_layout.addWidget(self.right_panel)
+        # central_layout.addWidget(self.far_right_panel)
         central_widget.setLayout(central_layout)
         self.setCentralWidget(central_widget)
+
 
     def create_left_panel(self):
         # Left panel for controls
@@ -114,6 +121,35 @@ class MLApp(QMainWindow):
         self.set_target_button.setStyleSheet(MAIN_FONT_STYLE)
         self.set_target_button.clicked.connect(self.set_target)
         left_layout.addWidget(self.set_target_button)
+
+     
+
+        h_layout = QHBoxLayout()
+        self.test_split_percentage_label = QLabel("Test Split Percentage:")
+        self.test_split_percentage_label.setStyleSheet(SECONDARY_FONT_STYLE)
+        h_layout.addWidget(self.test_split_percentage_label)
+        
+        self.test_split_percentage_input = QSpinBox()
+        self.test_split_percentage_input.setStyleSheet(SECONDARY_FONT_STYLE)
+        self.test_split_percentage_input.setMinimum(1)
+        self.test_split_percentage_input.setMaximum(100)
+        self.test_split_percentage_input.setValue(20)
+        h_layout.addWidget(self.test_split_percentage_input)
+        left_layout.addLayout(h_layout)
+
+        # Random state
+        h_layout = QHBoxLayout()
+        self.random_state_label = QLabel("Random state:")
+        self.random_state_label.setStyleSheet(SECONDARY_FONT_STYLE)
+        h_layout.addWidget(self.random_state_label)
+        
+        self.random_state_input = QSpinBox()
+        self.random_state_input.setStyleSheet(SECONDARY_FONT_STYLE)
+        self.random_state_input.setMinimum(1)
+        self.random_state_input.setMaximum(100)
+        self.random_state_input.setValue(42)
+        h_layout.addWidget(self.random_state_input)
+        left_layout.addLayout(h_layout)
 
         # Algorithm selection
         self.algorithm_label = QLabel("Select Algorithm:")
@@ -160,13 +196,16 @@ class MLApp(QMainWindow):
 
         # Plot buttons
         self.plot_confusion_button = QPushButton("Plot Confusion Matrix")
+        
         self.plot_confusion_button.setStyleSheet(MAIN_FONT_STYLE)
         self.plot_confusion_button.clicked.connect(self.plot_confusion_matrix)
+
         right_layout.addWidget(self.plot_confusion_button)
 
         self.plot_correlation_button = QPushButton("Plot Correlation Heatmap")
         self.plot_correlation_button.setStyleSheet(MAIN_FONT_STYLE)
-        self.plot_correlation_button.clicked.connect(self.plot_correlation_heatmap)
+        self.plot_correlation_button.clicked.connect(self.open_dialog)
+        # self.plot_correlation_button.clicked.connect(self.plot_correlation_heatmap)
         right_layout.addWidget(self.plot_correlation_button)
 
         self.plot_pairplot_button = QPushButton("Plot Pairplot")
@@ -175,6 +214,34 @@ class MLApp(QMainWindow):
         right_layout.addWidget(self.plot_pairplot_button)
 
         self.right_panel.setLayout(right_layout)
+
+        self.dialog = QDialog(self)
+        self.dialog.setWindowTitle("Confusion Matrix")
+        self.features_to_plot_list= QListWidget()
+        self.features_to_plot_list.setSelectionMode(QListWidget.MultiSelection)
+        self.features_to_plot_list.setStyleSheet(SECONDARY_FONT_STYLE)
+        self.features_to_plot_list.setFixedSize(300, 380)
+
+
+    def open_dialog(self):        
+        self.dialog_layout = QVBoxLayout(self)
+        self.dialog.setFixedSize(500, 400)
+        self.dialog_layout.addWidget(self.features_to_plot_list)
+
+        self.button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)    
+        self.button_box.accepted.connect(self.accept_dialog)
+        self.button_box.rejected.connect(self.dialog.reject)
+        self.dialog_layout.addWidget(self.button_box)
+        self.dialog.setLayout(self.dialog_layout)
+        self.dialog.exec_()
+            
+
+    def accept_dialog(self):
+        
+        self.set_features_to_plot()
+        self.plot_correlation_heatmap()
+        self.dialog.accept()
+
 
     def load_data(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "Open CSV File", "", "CSV Files (*.csv)")
@@ -188,6 +255,7 @@ class MLApp(QMainWindow):
             for column in self.dataset.columns:
                 self.features_list.addItem(column)
                 self.target_list.addItem(column)
+                self.features_to_plot_list.addItem(column)
 
 
             #remove nan value
@@ -234,8 +302,12 @@ class MLApp(QMainWindow):
             le_target = LabelEncoder()
             y = le_target.fit_transform(y)
 
+        test_split = self.test_split_percentage_input.value() /100
+        random_state = self.random_state_input.value()
+        print("train_test_split",test_split)  
+        print("random_state",random_state)
         # Split the dataset
-        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X, y, test_size=test_split, random_state=random_state)
 
         # Select model
         algorithm = self.algorithm_combo.currentText()
@@ -272,8 +344,19 @@ class MLApp(QMainWindow):
         if result.startswith("Error"):
             QMessageBox.critical(self, "Training Error", result)
         else:
-            QMessageBox.information(self, "Training Complete", "Training completed successfully!")
+            # QMessageBox.information(self, "Training Complete", "Training completed successfully!")
             self.results_display.setText(result)
+
+
+
+
+    def set_features_to_plot(self):
+        selected_items = self.features_to_plot_list.selectedItems()
+        if not selected_items:
+            QMessageBox.warning(self, "Warning", "Please select at least one feature")
+            return
+        self.features_columns_to_plot = [item.text() for item in selected_items]
+        QMessageBox.information(self, "Features Selected", f"Features: {', '.join(self.features_columns_to_plot)}")
 
     def plot_confusion_matrix(self):
         try:
@@ -287,12 +370,17 @@ class MLApp(QMainWindow):
             QMessageBox.critical(self, "Error", str(e))
 
     def plot_correlation_heatmap(self):
+        
+        
+        dataset = self.dataset[self.features_columns_to_plot]
+        
         try:
             if self.dataset is not None:
-                sns.heatmap(self.dataset.corr(), annot=True, cmap="coolwarm")
+                sns.heatmap(dataset.corr(), annot=True, cmap="coolwarm")
                 plt.title("Correlation Heatmap")
                 plt.show()
-        except Exception as e:
+            
+        except Exception as e:  
             QMessageBox.critical(self, "Error", str(e))
 
     def plot_pairplot(self):
@@ -313,6 +401,10 @@ class MLApp(QMainWindow):
         self.target_list.clear()
         self.dataset_info.clear()
         self.results_display.clear()
+        self.features_columns_to_plot = []
+        self.features_to_plot_list.clear()
+        self.test_split_percentage_input.setValue(20)
+        self.random_state_input.setValue(42)
         QMessageBox.information(self, "Cleared", "All selections cleared.")
 
 # Run application
