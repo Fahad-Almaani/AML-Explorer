@@ -45,8 +45,8 @@ class TrainThread(QThread):
             self.finished.emit(f"Error: {str(e)}")
 
 
-
-
+MAIN_FONT_STYLE = "font-size:18px;"
+SECONDARY_FONT_STYLE = "font-size:16px;" 
 class MLApp(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -77,37 +77,47 @@ class MLApp(QMainWindow):
         # Left panel for controls
         self.left_panel = QGroupBox("Controls")
         left_layout = QVBoxLayout()
-
+        
         # Load CSV button
         self.load_button = QPushButton("Load CSV File")
+        self.load_button.setStyleSheet(MAIN_FONT_STYLE)
         self.load_button.clicked.connect(self.load_data)
         left_layout.addWidget(self.load_button)
 
         # Features selection
-        self.features_label = QLabel("Select Features (Ctrl+Click to select multiple):")
+        self.features_label = QLabel("Select Features")
+        self.features_label.setStyleSheet(SECONDARY_FONT_STYLE)
+        
+        
         left_layout.addWidget(self.features_label)
 
         self.features_list = QListWidget()
         self.features_list.setSelectionMode(QListWidget.MultiSelection)
+        self.features_list.setStyleSheet(SECONDARY_FONT_STYLE)
         left_layout.addWidget(self.features_list)
 
         self.set_features_button = QPushButton("Set Features")
+        self.set_features_button.setStyleSheet(MAIN_FONT_STYLE)
         self.set_features_button.clicked.connect(self.set_features)
         left_layout.addWidget(self.set_features_button)
 
         # Target selection
         self.target_label = QLabel("Select Target Column:")
+        self.target_label.setStyleSheet(SECONDARY_FONT_STYLE)
         left_layout.addWidget(self.target_label)
 
         self.target_list = QListWidget()
+        self.target_list.setStyleSheet(SECONDARY_FONT_STYLE)
         left_layout.addWidget(self.target_list)
 
         self.set_target_button = QPushButton("Set Target")
+        self.set_target_button.setStyleSheet(MAIN_FONT_STYLE)
         self.set_target_button.clicked.connect(self.set_target)
         left_layout.addWidget(self.set_target_button)
 
         # Algorithm selection
         self.algorithm_label = QLabel("Select Algorithm:")
+        self.algorithm_label.setStyleSheet(SECONDARY_FONT_STYLE)
         left_layout.addWidget(self.algorithm_label)
 
         self.algorithm_combo = QComboBox()
@@ -115,14 +125,17 @@ class MLApp(QMainWindow):
             "Random Forest", "SVM", "Logistic Regression", "Decision Tree",
             "KNN", "Naive Bayes", "Ridge", "Gradient Boosting"
         ])
+        self.algorithm_combo.setStyleSheet(SECONDARY_FONT_STYLE)
         left_layout.addWidget(self.algorithm_combo)
 
         self.train_button = QPushButton("Train Model")
+        self.train_button.setStyleSheet(MAIN_FONT_STYLE)
         self.train_button.clicked.connect(self.train_model)
         left_layout.addWidget(self.train_button)
 
         self.clear_button = QPushButton("Clear All")
-        self.clear_button.setStyleSheet("background-color: red; color: white;")
+        
+        self.clear_button.setStyleSheet(f"background-color: red; color: white;{MAIN_FONT_STYLE}")
         self.clear_button.clicked.connect(self.clear_all)
         left_layout.addWidget(self.clear_button)
 
@@ -135,24 +148,29 @@ class MLApp(QMainWindow):
 
         # Dataset info display
         self.dataset_info = QTextEdit()
+        self.dataset_info.setStyleSheet(SECONDARY_FONT_STYLE)
         self.dataset_info.setReadOnly(True)
         right_layout.addWidget(self.dataset_info)
 
         # Model results display
         self.results_display = QTextEdit()
+        self.results_display.setStyleSheet(SECONDARY_FONT_STYLE)
         self.results_display.setReadOnly(True)
         right_layout.addWidget(self.results_display)
 
         # Plot buttons
         self.plot_confusion_button = QPushButton("Plot Confusion Matrix")
+        self.plot_confusion_button.setStyleSheet(MAIN_FONT_STYLE)
         self.plot_confusion_button.clicked.connect(self.plot_confusion_matrix)
         right_layout.addWidget(self.plot_confusion_button)
 
         self.plot_correlation_button = QPushButton("Plot Correlation Heatmap")
+        self.plot_correlation_button.setStyleSheet(MAIN_FONT_STYLE)
         self.plot_correlation_button.clicked.connect(self.plot_correlation_heatmap)
         right_layout.addWidget(self.plot_correlation_button)
 
         self.plot_pairplot_button = QPushButton("Plot Pairplot")
+        self.plot_pairplot_button.setStyleSheet(MAIN_FONT_STYLE)
         self.plot_pairplot_button.clicked.connect(self.plot_pairplot)
         right_layout.addWidget(self.plot_pairplot_button)
 
@@ -170,6 +188,10 @@ class MLApp(QMainWindow):
             for column in self.dataset.columns:
                 self.features_list.addItem(column)
                 self.target_list.addItem(column)
+
+
+            #remove nan value
+            self.dataset = self.dataset.dropna()
 
             # Display dataset info
             self.dataset_info.setText(str(self.dataset.dtypes))
