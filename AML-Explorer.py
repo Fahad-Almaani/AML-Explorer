@@ -190,37 +190,79 @@ class MLApp(QMainWindow):
 
         # Model results display
         self.results_display = QTextEdit()
-        self.results_display.setStyleSheet(SECONDARY_FONT_STYLE)
+        self.results_display.setStyleSheet(MAIN_FONT_STYLE)
         self.results_display.setReadOnly(True)
         right_layout.addWidget(self.results_display)
 
-        # Plot buttons
-        self.plot_confusion_button = QPushButton("Plot Confusion Matrix")
-        
-        self.plot_confusion_button.setStyleSheet(MAIN_FONT_STYLE)
-        self.plot_confusion_button.clicked.connect(self.plot_confusion_matrix)
-
-        right_layout.addWidget(self.plot_confusion_button)
-
-        self.plot_correlation_button = QPushButton("Plot Correlation Heatmap")
-        self.plot_correlation_button.setStyleSheet(MAIN_FONT_STYLE)
-        self.plot_correlation_button.clicked.connect(self.open_dialog)
-        # self.plot_correlation_button.clicked.connect(self.plot_correlation_heatmap)
-        right_layout.addWidget(self.plot_correlation_button)
-
-        self.plot_pairplot_button = QPushButton("Plot Pairplot")
-        self.plot_pairplot_button.setStyleSheet(MAIN_FONT_STYLE)
-        self.plot_pairplot_button.clicked.connect(self.plot_pairplot)
-        right_layout.addWidget(self.plot_pairplot_button)
-
-        self.right_panel.setLayout(right_layout)
 
         self.dialog = QDialog(self)
-        self.dialog.setWindowTitle("Confusion Matrix")
+        self.dialog.setWindowTitle("Plot")
         self.features_to_plot_list= QListWidget()
         self.features_to_plot_list.setSelectionMode(QListWidget.MultiSelection)
         self.features_to_plot_list.setStyleSheet(SECONDARY_FONT_STYLE)
         self.features_to_plot_list.setFixedSize(300, 380)
+
+        h_layout_1 = QHBoxLayout()
+        h_layout_2 = QHBoxLayout()
+        h_layout_3 = QHBoxLayout()
+        # Plot buttons
+        self.plot_confusion_button = QPushButton("Confusion Matrix")
+        
+        self.plot_confusion_button.setStyleSheet(MAIN_FONT_STYLE)
+        self.plot_confusion_button.clicked.connect(self.plot_confusion_matrix)
+
+        h_layout_1.addWidget(self.plot_confusion_button)
+
+        self.plot_correlation_button = QPushButton("Corr Heatmap")
+        self.plot_correlation_button.setStyleSheet(MAIN_FONT_STYLE)
+        self.plot_correlation_button.clicked.connect(self.plot_correlation_heatmap)
+        # self.plot_correlation_button.clicked.connect(self.plot_correlation_heatmap)
+        h_layout_1.addWidget(self.plot_correlation_button)
+
+        self.plot_pairplot_button = QPushButton("Plot Pairplot")
+        self.plot_pairplot_button.setStyleSheet(MAIN_FONT_STYLE)
+        self.plot_pairplot_button.clicked.connect(self.plot_pairplot)
+        h_layout_1.addWidget(self.plot_pairplot_button)
+
+
+        self.plot_scatter_button = QPushButton("Plot Scatter")
+        self.plot_scatter_button.setStyleSheet(MAIN_FONT_STYLE)
+        self.plot_scatter_button.clicked.connect(self.plot_scatter)
+        h_layout_2.addWidget(self.plot_scatter_button)
+
+        self.plot_histogram_button = QPushButton("Plot Histogram")
+        self.plot_histogram_button.setStyleSheet(MAIN_FONT_STYLE)
+        self.plot_histogram_button.clicked.connect(self.plot_histogram)
+        h_layout_2.addWidget(self.plot_histogram_button)
+
+        self.plot_boxplot_button = QPushButton("Plot Boxplot") 
+        self.plot_boxplot_button.setStyleSheet(MAIN_FONT_STYLE)
+        self.plot_boxplot_button.clicked.connect(self.plot_boxplot)
+        h_layout_2.addWidget(self.plot_boxplot_button)
+
+        self.plot_barplot_button = QPushButton("Plot Barplot")
+        self.plot_barplot_button.setStyleSheet(MAIN_FONT_STYLE)
+        self.plot_barplot_button.clicked.connect(self.plot_barplot)
+        h_layout_3.addWidget(self.plot_barplot_button)
+
+        self.violin_plot_button = QPushButton("Violin Plot")
+        self.violin_plot_button.setStyleSheet(MAIN_FONT_STYLE)
+        self.violin_plot_button.clicked.connect(self.plot_violinPlot)
+        h_layout_3.addWidget(self.violin_plot_button)
+
+        self.line_plot_button = QPushButton("Line Plot")
+        self.line_plot_button.setStyleSheet(MAIN_FONT_STYLE)
+        self.line_plot_button.clicked.connect(self.plot_linePlot)
+        h_layout_3.addWidget(self.line_plot_button)
+
+        right_layout.addLayout(h_layout_1)
+        right_layout.addLayout(h_layout_2)
+        right_layout.addLayout(h_layout_3)
+
+
+        self.right_panel.setLayout(right_layout)
+
+       
 
 
     def open_dialog(self):        
@@ -237,9 +279,7 @@ class MLApp(QMainWindow):
             
 
     def accept_dialog(self):
-        
         self.set_features_to_plot()
-        self.plot_correlation_heatmap()
         self.dialog.accept()
 
 
@@ -359,6 +399,10 @@ class MLApp(QMainWindow):
         QMessageBox.information(self, "Features Selected", f"Features: {', '.join(self.features_columns_to_plot)}")
 
     def plot_confusion_matrix(self):
+        self.open_dialog()
+        if self.model is None:
+            QMessageBox.critical(self, "Error", "Please train a model first")
+            return
         try:
             if self.model and self.X_test is not None:
                 y_pred = self.model.predict(self.X_test)
@@ -371,10 +415,10 @@ class MLApp(QMainWindow):
 
     def plot_correlation_heatmap(self):
         
-        
-        dataset = self.dataset[self.features_columns_to_plot]
-        
+        self.open_dialog()
+
         try:
+            dataset = self.dataset[self.features_columns_to_plot]
             if self.dataset is not None:
                 sns.heatmap(dataset.corr(), annot=True, cmap="coolwarm")
                 plt.title("Correlation Heatmap")
@@ -391,6 +435,90 @@ class MLApp(QMainWindow):
                 plt.show()
         except Exception as e:
             QMessageBox.critical(self, "Error", str(e))
+
+
+    def plot_scatter(self):
+        self.open_dialog()
+        if self.target_column == "":
+            QMessageBox.critical(self, "Error", "Please select a target column first")
+            return
+        
+        try:
+            if self.dataset is not None and self.features_columns_to_plot:
+                sns.scatterplot(data=self.dataset, x=self.features_columns_to_plot[0], y=self.features_columns_to_plot[1], hue=self.target_column)
+                plt.title("Scatter Plot")
+                plt.show()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", str(e))
+
+    
+    def plot_histogram(self):
+        self.open_dialog()
+        if self.target_column == "":
+            QMessageBox.critical(self, "Error", "Please select a target column first")
+            return
+        try:
+            if self.dataset is not None and self.features_columns_to_plot:
+                sns.histplot(data=self.dataset, x=self.features_columns_to_plot[0], hue=self.target_column)
+                plt.title("Histogram")
+                plt.show()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", str(e))
+
+    def plot_boxplot(self):
+        self.open_dialog()
+        if self.target_column == "":
+            QMessageBox.critical(self, "Error", "Please select a target column first")
+            return
+        try:
+            if self.dataset is not None and self.features_columns_to_plot:
+                sns.boxplot(data=self.dataset, x=self.features_columns_to_plot[0], y=self.features_columns_to_plot[1], hue=self.target_column)
+                plt.title("Boxplot")
+                plt.show()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", str(e))
+
+    def plot_barplot(self):
+        self.open_dialog()
+        if self.target_column == "":
+            QMessageBox.critical(self, "Error", "Please select a target column first")
+            return
+        try:
+            if self.dataset is not None and self.features_columns_to_plot:
+                sns.barplot(data=self.dataset, x=self.features_columns_to_plot[0], y=self.features_columns_to_plot[1], hue=self.target_column)
+                plt.title("Barplot")
+                plt.show()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", str(e))
+    
+    def plot_violinPlot(self):
+        self.open_dialog()
+        if self.target_column == "":
+            QMessageBox.critical(self, "Error", "Please select a target column first")
+            return
+        try:
+            if self.dataset is not None and self.features_columns_to_plot:
+                sns.violinplot(data=self.dataset, x=self.features_columns_to_plot[0], y=self.features_columns_to_plot[1], hue=self.target_column)
+                plt.title("Violin Plot")
+                plt.show()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", str(e))
+
+    def plot_linePlot(self):
+        self.open_dialog()
+        if self.target_column == "":
+            QMessageBox.critical(self, "Error", "Please select a target column first")
+            return
+        try:
+            if self.dataset is not None and self.features_columns_to_plot:
+                sns.lineplot(data=self.dataset, x=self.features_columns_to_plot[0], y=self.features_columns_to_plot[1], hue=self.target_column)
+                plt.title("Line Plot")
+                plt.show()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", str(e))
+
+   
+        
 
     def clear_all(self):
         self.dataset = None
