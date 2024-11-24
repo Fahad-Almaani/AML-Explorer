@@ -39,7 +39,7 @@ To get started with AML Explorer, follow these steps:
 
 ## Usage
 
-To use AML Explorer, run the `AML-Explorer.py` script with the necessary arguments. For example:
+To use AML Explorer, run the `AML-Explorer.py` script:
 
 ```sh
 python AML-Explorer.py
