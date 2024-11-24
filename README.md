@@ -2,6 +2,8 @@
 
 AML Explorer is a Python-based tool designed to explore and analyze data using different algorithms. It features a GUI that allows users to load datasets, select features and target variables, train models, and view results. Additionally, it supports data visualization through plotting.
 
+![Image Description](https://github.com/Fahad-Almmani/AML-EXPLORER/blob/main/main_screen.png "main screen image")
+
 ## Installation
 
 To get started with AML Explorer, follow these steps:
